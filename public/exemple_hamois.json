@@ -1,0 +1,233 @@
+{
+  "nomProjet": "ASS-21-1064_HAMOIS",
+  "infosAdministratives": {
+    "intitule": "Hamois — Égouttage rue de la Gare et voiries adjacentes",
+    "mo": "I.N.A.S.E.P. / Commune de Hamois",
+    "auteur": "I.N.A.S.E.P. — Bureau d'études",
+    "entrepreneur": "Entreprise Générale de Voirie & Égouttage SA",
+    "marche": "ASS-21-1064",
+    "lieu": "Hamois (5360)",
+    "controleur": "F. Pirquin"
+  },
+  "marche3P": [
+    { "id": "10", "desc": "Terrassement en tranchée pour canalisation DN <= 300, 0m < PMR <= 1m", "u": "m³", "qte": 120, "pu": 18.5 },
+    { "id": "11", "desc": "Terrassement en tranchée pour canalisation DN <= 300, 1m < PMR <= 2m", "u": "m³", "qte": 650, "pu": 22.0 },
+    { "id": "12", "desc": "Terrassement en tranchée pour canalisation DN <= 300, 2m < PMR <= 3m", "u": "m³", "qte": 480, "pu": 28.5 },
+    { "id": "13", "desc": "Terrassement en tranchée pour canalisation DN <= 400, 2m < PMR <= 3m", "u": "m³", "qte": 260, "pu": 31.0 },
+    { "id": "20", "desc": "Supplément de terrassement en terrain rocheux (hors ouvrage)", "u": "m³", "qte": 85, "pu": 42.0 },
+    { "id": "21", "desc": "Supplément de terrassement en terrain compact (hors ouvrage)", "u": "m³", "qte": 90, "pu": 19.0 },
+    { "id": "22", "desc": "Remplacement de sol impropre en fond de fouille", "u": "m³", "qte": 60, "pu": 36.5 },
+    { "id": "25", "desc": "Supplément pour déblais excédentaires évacués", "u": "m³", "qte": 520, "pu": 14.2 },
+    { "id": "28", "desc": "Gestion des terres excavées et stockage provisoire", "u": "m³", "qte": 1400, "pu": 3.5 },
+    { "id": "29", "desc": "Criblage des terres excavées en vue de réutilisation", "u": "m³", "qte": 400, "pu": 6.8 },
+    { "id": "31", "desc": "Fourniture et pose de tuyau en béton armé (BA) DN = 300", "u": "m", "qte": 340, "pu": 84.0 },
+    { "id": "32", "desc": "Fourniture et pose de tuyau en béton armé (BA) DN = 400", "u": "m", "qte": 150, "pu": 112.0 },
+    { "id": "35", "desc": "Enrobage de canalisation en concassé / béton maigre", "u": "m³", "qte": 240, "pu": 48.0 },
+    { "id": "38", "desc": "Remblai spécial d'apport en empierrement 0/32 ou sable-ciment", "u": "m³", "qte": 420, "pu": 32.5 },
+    { "id": "39", "desc": "Traitement à la chaux vive des terres de remblai", "u": "t", "qte": 25, "pu": 165.0 },
+    { "id": "41", "desc": "Regard de visite complet (chambre de visite) 1m < H <= 2m", "u": "p", "qte": 6, "pu": 1850.0 },
+    { "id": "42", "desc": "Regard de visite complet (chambre de visite) 2m < H <= 3m", "u": "p", "qte": 8, "pu": 2350.0 },
+    { "id": "50", "desc": "Inspection caméra autotractée des canalisations neuves", "u": "m", "qte": 490, "pu": 6.4 },
+    { "id": "61", "desc": "Mise en site autorisé (CET) de terres de Type I (D9000)", "u": "m³", "qte": 300, "pu": 12.5 },
+    { "id": "62", "desc": "Mise en site autorisé (CET) de terres de Type II (D9000)", "u": "m³", "qte": 280, "pu": 24.0 },
+    { "id": "71", "desc": "Sciage de revêtement hydrocarboné sur toute épaisseur", "u": "m", "qte": 450, "pu": 5.2 },
+    { "id": "72", "desc": "Fraisage de revêtement hydrocarboné E = 5 cm", "u": "m²", "qte": 380, "pu": 8.4 },
+    { "id": "73", "desc": "Démolition de revêtement existant et évacuation", "u": "m²", "qte": 420, "pu": 14.5 },
+    { "id": "74", "desc": "Démolition de sous-fondation existante et évacuation", "u": "m³", "qte": 110, "pu": 21.0 },
+    { "id": "75", "desc": "Démolition de fondation existante et évacuation", "u": "m³", "qte": 130, "pu": 26.5 },
+    { "id": "81", "desc": "Sous-fondation granulaire type I E = 25 cm", "u": "m³", "qte": 140, "pu": 38.0 },
+    { "id": "82", "desc": "Fondation en empierrement 0/32 E = 20 cm", "u": "m³", "qte": 130, "pu": 44.5 },
+    { "id": "83", "desc": "Sous-couche en enrobé bitumineux de base E = 6 cm", "u": "m²", "qte": 460, "pu": 21.5 },
+    { "id": "84", "desc": "Couche de roulement en enrobé bitumineux de surface E = 4 cm", "u": "m²", "qte": 460, "pu": 19.0 }
+  ],
+  "avenants": [
+    { "type": "AV1", "id": "AV1-001", "desc": "Blindage spécial par palplanches en traversée de voirie régionale", "u": "m²", "qte": 65, "pu": 95.0 }
+  ],
+  "tronconsEgout": [
+    {
+      "ref": "L1",
+      "ordreEncodage": 1,
+      "de": "CV101",
+      "a": "CV102",
+      "long": 42.5,
+      "p_amo": 1.85,
+      "p_ava": 2.05,
+      "sf": 0.25,
+      "fond": 0.20,
+      "rev": 0.10,
+      "epExist": 0.45,
+      "natureTuyau": "BA",
+      "dn": 300,
+      "diamExt": 380,
+      "milieu": "VC",
+      "remblaiType": "Empierrement 0/32",
+      "chauxPourcent": 0,
+      "d9000Type": "Type II",
+      "fait": true,
+      "lt_force": null,
+      "insp_porter": true,
+      "insp_qte": null,
+      "cet_porter": true,
+      "cet_qte": null,
+      "rocheux": { "p": 0.35, "l": 12.0 },
+      "compact": null,
+      "remplacement": null,
+      "blindage": null,
+      "avecEnrobage": true,
+      "cvAmo": { "dint": 1.0, "h": 1.85 },
+      "cvAva": { "dint": 1.0, "h": 2.05 }
+    },
+    {
+      "ref": "L2",
+      "ordreEncodage": 2,
+      "de": "CV102",
+      "a": "CV103",
+      "long": 48.0,
+      "p_amo": 2.05,
+      "p_ava": 2.35,
+      "sf": 0.25,
+      "fond": 0.20,
+      "rev": 0.10,
+      "epExist": 0.45,
+      "natureTuyau": "BA",
+      "dn": 300,
+      "diamExt": 380,
+      "milieu": "VE",
+      "remblaiType": "Empierrement 0/32",
+      "chauxPourcent": 0,
+      "d9000Type": "Type II",
+      "fait": true,
+      "lt_force": null,
+      "insp_porter": true,
+      "insp_qte": null,
+      "cet_porter": true,
+      "cet_qte": null,
+      "rocheux": null,
+      "compact": null,
+      "remplacement": { "p": 0.4, "l": 15.0 },
+      "blindage": null,
+      "avecEnrobage": true,
+      "cvAmo": { "dint": 1.0, "h": 2.05 },
+      "cvAva": { "dint": 1.0, "h": 2.35 }
+    },
+    {
+      "ref": "L3",
+      "ordreEncodage": 3,
+      "de": "CV103",
+      "a": "CV104",
+      "long": 36.8,
+      "p_amo": 2.35,
+      "p_ava": 2.55,
+      "sf": 0,
+      "fond": 0,
+      "rev": 0.3,
+      "epExist": 0.3,
+      "natureTuyau": "BA",
+      "dn": 400,
+      "diamExt": 500,
+      "milieu": "TN",
+      "remblaiType": "Terrain Naturel",
+      "chauxPourcent": 0,
+      "d9000Type": "Type I",
+      "fait": true,
+      "lt_force": null,
+      "insp_porter": false,
+      "insp_qte": null,
+      "cet_porter": true,
+      "cet_qte": null,
+      "rocheux": null,
+      "compact": { "p": 0.5, "l": 20.0 },
+      "remplacement": null,
+      "blindage": null,
+      "avecEnrobage": true,
+      "cvAmo": { "dint": 1.0, "h": 2.35 },
+      "cvAva": { "dint": 1.2, "h": 2.55 }
+    }
+  ],
+  "compteurTroncons": 3,
+  "ordreTroncons": 3,
+  "carnetMesurage": {
+    "lignesManuelles": [
+      {
+        "id": "cv80_CV101",
+        "posteId": "41",
+        "libelle": "Pose complète CV101 (80% — Hors accessoires de finition)",
+        "quantite": 0.8,
+        "detailFormule": "CV101 : H = 1.85 m\n80% = 0.800 (Hors accessoires de finition)",
+        "cvKey": "CV101"
+      },
+      {
+        "id": "cv20_CV101",
+        "posteId": "41",
+        "libelle": "Pose complète CV101 (20% — Accessoires de finition)",
+        "quantite": 0.2,
+        "detailFormule": "CV101 : H = 1.85 m\n20% = 0.200 (Accessoires de finition)",
+        "cvKey": "CV101"
+      },
+      {
+        "id": "voirie:L1:sousfond",
+        "posteId": "81",
+        "libelle": "Sous-fondation — L1 (CV101 → CV102)",
+        "quantite": 12.538,
+        "detailFormule": "Sous-fondation — L1 (VC)\nL(42.500m) × l(1.180m) × ép(0.250m) = 12.538 m³",
+        "roleAuto": "voirie:sousfond",
+        "tronconRef": "L1"
+      }
+    ],
+    "statutsLignes": {
+      "auto_L1_fouille": { "porteeA": "EA 01", "coche": false, "qteSnapshot": 97.813, "posteIdSnapshot": "11" },
+      "auto_L1_tuyau": { "porteeA": "EA 01", "coche": false, "qteSnapshot": 41.5, "posteIdSnapshot": "31" },
+      "manuelle_cv80_CV101": { "porteeA": "EA 01", "coche": false, "qteSnapshot": 0.8, "posteIdSnapshot": "41" },
+      "auto_L2_fouille": { "porteeA": null, "coche": true },
+      "auto_L2_tuyau": { "porteeA": null, "coche": true },
+      "manuelle_voirie:L1:sousfond": { "porteeA": null, "coche": true }
+    },
+    "overrides": {},
+    "cvAutoGeneres": ["CV101"]
+  },
+  "historiqueEA": [
+    {
+      "indice": "EA 01",
+      "date": "15/09/2025",
+      "montant": 7117.89,
+      "detailParPoste": [
+        { "posteId": "11", "qte": 97.813, "montant": 2151.89 },
+        { "posteId": "31", "qte": 41.5, "montant": 3486.0 },
+        { "posteId": "41", "qte": 0.8, "montant": 1480.0 }
+      ]
+    }
+  ],
+  "delais": {
+    "os": "2025-08-18",
+    "base": 90,
+    "unite": "JO",
+    "finCalendrier": "2025-11-30",
+    "joursMarques": {
+      "2025-09-08": "intemperie",
+      "2025-09-09": "intemperie",
+      "2025-10-14": "intemperie",
+      "2025-11-01": "ferie",
+      "2025-11-11": "ferie"
+    },
+    "delaisCompl": [
+      { "libelle": "Travaux complémentaires traversée voirie", "valeur": 10, "unite": "JO" }
+    ],
+    "arrets": [
+      { "dateDebut": "2025-10-20", "dateReprise": "2025-10-27" }
+    ],
+    "mesDuree": 15,
+    "mesUnite": "JC",
+    "dateMes": ""
+  },
+  "configVoirie": {
+    "parTroncon": {
+      "L1": {
+        "sousfond": { "posteId": "81" },
+        "sousfond_dims": { "l": 42.5, "w": 1.18, "e": 0.25 }
+      }
+    }
+  },
+  "configDemolition": {
+    "parTroncon": {}
+  }
+}
