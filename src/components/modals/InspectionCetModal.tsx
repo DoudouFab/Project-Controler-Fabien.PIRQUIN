@@ -1,7 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { Lock, X } from 'lucide-react';
 import { ProjectData, TronconEgout } from '../../types/project';
-import { calcQte, cleLigneAuto, fmt, NRM } from '../../utils/calculations';
+import {
+  calcQte,
+  cleLigneAuto,
+  fmt,
+  getTronconCetEffectiveEA,
+  NRM,
+} from '../../utils/calculations';
 
 interface InspectionCetModalProps {
   mode: 'insp' | 'cet';
@@ -36,15 +42,16 @@ export const InspectionCetModal: React.FC<InspectionCetModalProps> = ({
       const defQte = isInsp ? q.longPose : q.v_d9000;
       const porter = isInsp ? Boolean(t.insp_porter) : Boolean(t.cet_porter);
       const customQte = isInsp ? t.insp_qte : t.cet_qte;
-      const lineKey = isInsp
-        ? cleLigneAuto(t.ref, 'insp')
-        : `cet_${(t.d9000Type || '').replace(/\s+/g, '_')}`;
-      const isBilled = Boolean(statuts[lineKey]?.porteeA);
+      const billedEA = isInsp
+        ? statuts[cleLigneAuto(t.ref, 'insp')]?.porteeA || null
+        : getTronconCetEffectiveEA(t, statuts);
+      const isBilled = Boolean(billedEA);
       return {
         t,
         defQte,
         porter,
         qte: customQte !== null && isFinite(customQte) ? customQte : defQte,
+        billedEA,
         isBilled,
       };
     });
@@ -156,7 +163,7 @@ export const InspectionCetModal: React.FC<InspectionCetModalProps> = ({
             <table className="w-full text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700">
-                  <th className="py-2 px-2.5 text-center w-12">Porter</th>
+                  <th className="py-2 px-2.5 text-center w-20">Porter</th>
                   <th className="py-2 px-2.5 text-left">Tronçon</th>
                   {!isInsp && <th className="py-2 px-2.5 text-left">Type D9000</th>}
                   <th className="py-2 px-2.5 text-right w-28">
@@ -174,7 +181,7 @@ export const InspectionCetModal: React.FC<InspectionCetModalProps> = ({
                       className="hover:bg-slate-50 dark:hover:bg-slate-800/40"
                     >
                       <td className="py-1.5 px-2.5 text-center">
-                        <div className="inline-flex items-center gap-1">
+                        <div className="inline-flex items-center justify-center gap-1">
                           <input
                             type="checkbox"
                             disabled={r.isBilled}
@@ -186,7 +193,15 @@ export const InspectionCetModal: React.FC<InspectionCetModalProps> = ({
                               }))
                             }
                           />
-                          {r.isBilled && <Lock className="w-3 h-3 text-emerald-600" />}
+                          {r.isBilled && (
+                            <span
+                              title={`Déjà facturé dans ${r.billedEA}`}
+                              className="inline-flex items-center gap-0.5 text-[10px] font-mono font-semibold text-emerald-700 dark:text-emerald-400"
+                            >
+                              <Lock className="w-3 h-3" />
+                              {r.billedEA}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-1.5 px-2.5">

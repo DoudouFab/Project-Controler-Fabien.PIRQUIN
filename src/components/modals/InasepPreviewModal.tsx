@@ -1,13 +1,30 @@
-import React from 'react';
-import { Printer, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileSpreadsheet, Printer, X } from 'lucide-react';
 import { printHtmlViaIframe } from '../../utils/inasepPrint';
 
 interface InasepPreviewModalProps {
   html: string;
   onClose: () => void;
+  onExportExcel?: () => Promise<void> | void;
 }
 
-export const InasepPreviewModal: React.FC<InasepPreviewModalProps> = ({ html, onClose }) => {
+export const InasepPreviewModal: React.FC<InasepPreviewModalProps> = ({
+  html,
+  onClose,
+  onExportExcel,
+}) => {
+  const [exporting, setExporting] = useState(false);
+
+  const handleExcel = async () => {
+    if (!onExportExcel || exporting) return;
+    setExporting(true);
+    try {
+      await onExportExcel();
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="no-print fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl overflow-hidden">
@@ -21,6 +38,17 @@ export const InasepPreviewModal: React.FC<InasepPreviewModalProps> = ({ html, on
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {onExportExcel && (
+              <button
+                type="button"
+                disabled={exporting}
+                onClick={handleExcel}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 text-emerald-800 dark:text-emerald-300 cursor-pointer disabled:opacity-60"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                {exporting ? 'Export...' : 'Export Excel (INASEP)'}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => printHtmlViaIframe(html)}
@@ -37,11 +65,11 @@ export const InasepPreviewModal: React.FC<InasepPreviewModalProps> = ({ html, on
             </button>
           </div>
         </div>
-        <div className="flex-1 bg-slate-200 dark:bg-slate-950 p-4 overflow-hidden">
+        <div className="flex-1 bg-slate-300 dark:bg-slate-950 p-4 overflow-hidden">
           <iframe
             title="Aperçu feuille de délais INASEP"
             srcDoc={html}
-            className="w-full h-full bg-white rounded shadow-lg border border-slate-300"
+            className="w-full h-full bg-slate-300 rounded shadow-lg border border-slate-400"
           />
         </div>
       </div>

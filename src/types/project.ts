@@ -55,6 +55,7 @@ export interface TronconEgout {
   insp_qte: number | null;
   cet_porter: boolean;
   cet_qte: number | null;
+  cet_porteeA?: string | null;
   rocheux: ConditionParticuliere | null;
   compact: ConditionParticuliere | null;
   remplacement: ConditionParticuliere | null;
@@ -228,6 +229,8 @@ export interface CarnetLineItem {
   isCorrection?: boolean;
   isUpdatedAfterEA?: boolean;
   diffCorrection?: number;
+  cetType?: string;
+  isCetOpen?: boolean;
 }
 
 export interface DelaiMoisRow {
@@ -244,6 +247,7 @@ export interface DelaiMoisRow {
   nMes: number;
   mesEmp: number;
   intDetail: string;
+  eaLabel?: string;
 }
 
 export interface EtatDelai {

@@ -11,7 +11,6 @@ import {
 import { exportFeuilleDelaisExcel } from '../utils/excelExports';
 import { buildInasepDelaySheetHtml, printHtmlViaIframe } from '../utils/inasepPrint';
 import { PrintHeader } from './PrintHeader';
-import { InasepPreviewModal } from './modals/InasepPreviewModal';
 
 interface Tab7DelaisProps {
   appData: ProjectData;
@@ -71,7 +70,8 @@ export const Tab7Delais: React.FC<Tab7DelaisProps> = ({
   onToggleSansCalendrier,
 }) => {
   const [brush, setBrush] = useState<BrushMode>('intemperie');
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [subTab, setSubTab] = useState<'calendrier' | 'apercu'>('calendrier');
+  const [exportingExcel, setExportingExcel] = useState(false);
   const [rangeStart, setRangeStart] = useState<string>('');
   const [rangeEnd, setRangeEnd] = useState<string>('');
   const [rangeType, setRangeType] = useState<BrushMode>('conge');
@@ -280,60 +280,100 @@ export const Tab7Delais: React.FC<Tab7DelaisProps> = ({
 
   const totalRest = (state.executionRestant.JO || 0) + (state.executionRestant.JC || 0);
 
+  const inasepHtml = useMemo(() => buildInasepDelaySheetHtml(appData), [appData]);
+
   const handleOpenInasepPrint = () => {
-    const html = buildInasepDelaySheetHtml(appData);
-    printHtmlViaIframe(html);
+    printHtmlViaIframe(inasepHtml);
   };
 
-  const handleOpenInasepPreview = () => {
-    setPreviewHtml(buildInasepDelaySheetHtml(appData));
+  const handleExportExcel = async () => {
+    if (exportingExcel) return;
+    setExportingExcel(true);
+    try {
+      await exportFeuilleDelaisExcel(appData);
+      onNotify?.('success', 'Export Excel au format officiel INASEP généré.');
+    } catch {
+      onNotify?.('error', 'Erreur lors de la génération de l’export Excel.');
+    } finally {
+      setExportingExcel(false);
+    }
   };
 
   return (
     <div className="space-y-4">
       <PrintHeader infos={appData.infosAdministratives} />
 
-      {/* Barre d'action INASEP */}
+      {/* Barre d'action INASEP & onglets d'affichage */}
       <div className="no-print bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-            Suivi des Délais d'Exécution &amp; Feuille Officielle INASEP
-          </h2>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Cliquez ou glissez sur les jours du calendrier pour marquer intempéries, fériés ou congés pré-encodés.
-          </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              Suivi des Délais d'Exécution &amp; Feuille Officielle INASEP
+            </h2>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              {subTab === 'calendrier'
+                ? 'Cliquez ou glissez sur les jours du calendrier pour marquer intempéries, fériés ou congés pré-encodés.'
+                : 'Aperçu A4 Portrait strictement identique au format d’impression INASEP (signatures & pagination par page).'}
+            </p>
+          </div>
+
+          <div className="inline-flex rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-950 p-0.5">
+            <button
+              type="button"
+              onClick={() => setSubTab('calendrier')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md cursor-pointer transition-colors ${
+                subTab === 'calendrier'
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <CalendarDays className="w-3.5 h-3.5" /> Calendrier &amp; Saisie
+            </button>
+            <button
+              type="button"
+              onClick={() => setSubTab('apercu')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md cursor-pointer transition-colors ${
+                subTab === 'apercu'
+                  ? 'bg-sky-800 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5" /> Aperçu format INASEP
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => {
-              exportFeuilleDelaisExcel(appData);
-              onNotify?.('success', 'Export Excel de la feuille de délais généré.');
-            }}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 cursor-pointer whitespace-nowrap"
+            disabled={exportingExcel}
+            onClick={handleExportExcel}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 cursor-pointer whitespace-nowrap disabled:opacity-60"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5" /> Export Excel
-          </button>
-          <button
-            type="button"
-            onClick={handleOpenInasepPreview}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 cursor-pointer whitespace-nowrap"
-          >
-            <Eye className="w-3.5 h-3.5" /> Aperçu format INASEP
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            {exportingExcel ? 'Génération Excel...' : 'Export Excel (format INASEP)'}
           </button>
           <button
             type="button"
             onClick={handleOpenInasepPrint}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-sky-800 hover:bg-sky-700 text-white cursor-pointer whitespace-nowrap"
           >
-            <Printer className="w-3.5 h-3.5" /> Feuille de délais (format INASEP)
+            <Printer className="w-3.5 h-3.5" /> Imprimer / PDF (format INASEP)
           </button>
         </div>
       </div>
 
-      {/* Config gauche + Dashboard droit */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+      {subTab === 'apercu' ? (
+        <div className="no-print bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+          <iframe
+            title="Aperçu feuille de délais INASEP"
+            srcDoc={inasepHtml}
+            className="w-full h-[calc(100vh-225px)] min-h-[720px] bg-slate-300 border-0 block"
+          />
+        </div>
+      ) : (
+        /* Config gauche + Dashboard droit */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {/* Paramétrage des délais */}
         <div className="no-print lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-4 text-xs">
           <div>
@@ -974,13 +1014,15 @@ export const Tab7Delais: React.FC<Tab7DelaisProps> = ({
                     <th className="py-2 px-2 text-center">Intemp.</th>
                     <th className="py-2 px-2 text-center font-bold">Total déduit</th>
                     <th className="py-2 px-2 text-center font-bold">J. Employés</th>
+                    <th className="py-2 px-2.5 text-left">Observations</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-mono tabular-nums">
-                  {state.rows.filter((r) => r.nbJ > 0 || r.nMes > 0).length === 0 ? (
+                  {state.rows.filter((r) => r.nbJ > 0 || r.nMes > 0 || Boolean(r.eaLabel))
+                    .length === 0 ? (
                     <tr>
                       <td
-                        colSpan={sansCalendrier ? 10 : 9}
+                        colSpan={sansCalendrier ? 11 : 10}
                         className="py-6 text-center font-sans italic text-slate-500"
                       >
                         Aucun jour comptabilisé sur la période.
@@ -988,37 +1030,48 @@ export const Tab7Delais: React.FC<Tab7DelaisProps> = ({
                     </tr>
                   ) : (
                     state.rows
-                      .filter((r) => r.nbJ > 0 || r.nMes > 0)
-                      .map((r) => (
-                        <tr
-                          key={`${r.y}-${r.m}`}
-                          className="hover:bg-slate-50 dark:hover:bg-slate-800/40"
-                        >
-                          <td className="py-1.5 px-2.5 font-sans font-semibold text-slate-800 dark:text-slate-100">
-                            {MOIS_FR[r.m]} {r.y}
-                            {r.nMes > 0 && (
-                              <span className="ml-1.5 text-[10px] text-sky-700 dark:text-sky-400">
-                                ({r.nMes}J MES)
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-1.5 px-2 text-center">{r.nbJ}</td>
-                          <td className="py-1.5 px-2 text-center">{r.nSam}</td>
-                          <td className="py-1.5 px-2 text-center">{r.nDim}</td>
-                          <td className="py-1.5 px-2 text-center">{r.nFer}</td>
-                          <td className="py-1.5 px-2 text-center">{r.nCon}</td>
-                          {sansCalendrier && (
-                            <td className="py-1.5 px-2 text-center text-[11px]">
-                              {r.intDetail}
+                      .filter((r) => r.nbJ > 0 || r.nMes > 0 || Boolean(r.eaLabel))
+                      .map((r) => {
+                        const obsParts: string[] = [];
+                        if (r.eaLabel) obsParts.push(r.eaLabel);
+                        if (r.nMes > 0) obsParts.push(`MES : ${r.nMes} j`);
+                        if (r.nbJ === 0 && r.nMes === 0) obsParts.push('Arrêt de délai');
+                        return (
+                          <tr
+                            key={`${r.y}-${r.m}`}
+                            className="hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                          >
+                            <td className="py-1.5 px-2.5 font-sans font-semibold text-slate-800 dark:text-slate-100">
+                              {MOIS_FR[r.m]} {r.y}
+                              {r.nMes > 0 && (
+                                <span className="ml-1.5 text-[10px] text-sky-700 dark:text-sky-400">
+                                  ({r.nMes}J MES)
+                                </span>
+                              )}
                             </td>
-                          )}
-                          <td className="py-1.5 px-2 text-center">{r.nInt}</td>
-                          <td className="py-1.5 px-2 text-center font-bold">{r.ded}</td>
-                          <td className="py-1.5 px-2 text-center font-bold text-emerald-700 dark:text-emerald-400">
-                            {r.emp}
-                          </td>
-                        </tr>
-                      ))
+                            <td className="py-1.5 px-2 text-center">{r.nbJ > 0 ? r.nbJ : '—'}</td>
+                            <td className="py-1.5 px-2 text-center">{r.nbJ > 0 ? r.nSam : '—'}</td>
+                            <td className="py-1.5 px-2 text-center">{r.nbJ > 0 ? r.nDim : '—'}</td>
+                            <td className="py-1.5 px-2 text-center">{r.nbJ > 0 ? r.nFer : '—'}</td>
+                            <td className="py-1.5 px-2 text-center">{r.nbJ > 0 ? r.nCon : '—'}</td>
+                            {sansCalendrier && (
+                              <td className="py-1.5 px-2 text-center text-[11px]">
+                                {r.nbJ > 0 ? r.intDetail : '—'}
+                              </td>
+                            )}
+                            <td className="py-1.5 px-2 text-center">{r.nbJ > 0 ? r.nInt : '—'}</td>
+                            <td className="py-1.5 px-2 text-center font-bold">
+                              {r.nbJ > 0 ? r.ded : '—'}
+                            </td>
+                            <td className="py-1.5 px-2 text-center font-bold text-emerald-700 dark:text-emerald-400">
+                              {r.nbJ > 0 ? r.emp : '—'}
+                            </td>
+                            <td className="py-1.5 px-2.5 text-left font-sans text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                              {obsParts.join(' · ')}
+                            </td>
+                          </tr>
+                        );
+                      })
                   )}
                 </tbody>
                 <tfoot className="bg-slate-100 dark:bg-slate-800 font-bold border-t border-slate-300 dark:border-slate-700">
@@ -1032,6 +1085,7 @@ export const Tab7Delais: React.FC<Tab7DelaisProps> = ({
                     <td className="py-2 px-2 text-center font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                       {state.consumedExec}
                     </td>
+                    <td />
                   </tr>
                 </tfoot>
               </table>
@@ -1060,9 +1114,6 @@ export const Tab7Delais: React.FC<Tab7DelaisProps> = ({
           </div>
         </div>
       </div>
-
-      {previewHtml && (
-        <InasepPreviewModal html={previewHtml} onClose={() => setPreviewHtml(null)} />
       )}
     </div>
   );

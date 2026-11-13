@@ -7,6 +7,7 @@ import {
   EtatDelai,
   PosteMarche,
   ProjectData,
+  StatutLigne,
   TronconEgout,
 } from '../types/project';
 import { LIT_POSE, RECOUVREMENT } from '../constants/inasep';
@@ -862,6 +863,21 @@ export function candidatsPourCV(appData: ProjectData, h: number): PosteMarche[] 
 
 export const cleLigneAuto = (ref: string, nat: string) => `auto_${ref}_${nat}`;
 export const cleLigneMan = (id: string) => `manuelle_${id}`;
+export const cetTypeSlug = (type: string) => type.replace(/\s+/g, '_');
+export const cleCetBilled = (type: string, eaIndice: string) =>
+  `cet_${cetTypeSlug(type)}__ea_${eaIndice}`;
+
+export function getTronconCetEffectiveEA(
+  t: TronconEgout,
+  statuts: Record<string, StatutLigne> | undefined
+): string | null {
+  if (!t.cet_porter || !t.d9000Type) return null;
+  if (t.cet_porteeA !== undefined) {
+    return t.cet_porteeA || null;
+  }
+  const legacyKey = `cet_${cetTypeSlug(t.d9000Type)}`;
+  return statuts?.[legacyKey]?.porteeA || null;
+}
 
 export function construireLignesCarnet(appData: ProjectData): CarnetLineItem[] {
   const allPostes = srcP(appData);
@@ -880,7 +896,8 @@ export function construireLignesCarnet(appData: ProjectData): CarnetLineItem[] {
     libTroncon: string,
     ordreTroncon: number,
     qCalc: number,
-    manuelleId?: string
+    manuelleId?: string,
+    extra?: Partial<CarnetLineItem>
   ) => {
     const ovL = ov[cle] || {};
     if (ovL._ignore && !statuts[cle]?.porteeA) return;
@@ -922,6 +939,7 @@ export function construireLignesCarnet(appData: ProjectData): CarnetLineItem[] {
         annotation: ovL.annotation || '',
         formuleSupplement: ovL.formuleSupplement || '',
         manuelleId,
+        ...(extra || {}),
       });
 
       const currentPosteId = posteEffCourant?.id || null;
@@ -1046,6 +1064,7 @@ export function construireLignesCarnet(appData: ProjectData): CarnetLineItem[] {
       annotation: ovL.annotation || '',
       formuleSupplement: ovL.formuleSupplement || '',
       manuelleId,
+      ...(extra || {}),
     });
   };
 
@@ -1325,32 +1344,83 @@ export function construireLignesCarnet(appData: ProjectData): CarnetLineItem[] {
     }
   });
 
-  // 11. CET / D9000 groupé par type (opt-in)
-  const cetMap = new Map<string, { vol: number; refs: string[] }>();
+  // 11. CET / D9000 — 1 regroupement par (Type D9000, EA clôturé) + 1 regroupement ouvert par Type D9000
+  const cetBilledMap = new Map<string, { type: string; ea: string; vol: number; refs: string[] }>();
+  const cetOpenMap = new Map<string, { vol: number; refs: string[] }>();
+
   tronconsFait.forEach((t) => {
     if (!t.cet_porter || !t.d9000Type) return;
     const dBit = NRM(t.d9000Type || '');
     if (dBit.includes('bitumin') || dBit.includes('enrobe') || dBit.includes('fraisa')) return;
     const q = calcQte(t);
     const qCET = t.cet_qte !== null && isFinite(t.cet_qte) ? t.cet_qte : q.v_d9000 || 0;
-    if (!cetMap.has(t.d9000Type)) cetMap.set(t.d9000Type, { vol: 0, refs: [] });
-    const entry = cetMap.get(t.d9000Type)!;
-    entry.vol += qCET;
-    entry.refs.push(t.ref);
+    const effEA = getTronconCetEffectiveEA(t, statuts);
+    if (effEA) {
+      const bKey = `${t.d9000Type}\u0000${effEA}`;
+      if (!cetBilledMap.has(bKey)) {
+        cetBilledMap.set(bKey, { type: t.d9000Type, ea: effEA, vol: 0, refs: [] });
+      }
+      const entry = cetBilledMap.get(bKey)!;
+      entry.vol += qCET;
+      entry.refs.push(t.ref);
+    } else {
+      if (!cetOpenMap.has(t.d9000Type)) cetOpenMap.set(t.d9000Type, { vol: 0, refs: [] });
+      const entry = cetOpenMap.get(t.d9000Type)!;
+      entry.vol += qCET;
+      entry.refs.push(t.ref);
+    }
   });
+
   let d9000Ordre = 50000;
-  cetMap.forEach((data, type) => {
+  const billedEntries = Array.from(cetBilledMap.values()).sort((a, b) => {
+    const cType = a.type.localeCompare(b.type, 'fr', { numeric: true });
+    if (cType !== 0) return cType;
+    return a.ea.localeCompare(b.ea, 'fr', { numeric: true });
+  });
+
+  billedEntries.forEach((data) => {
+    const slug = cetTypeSlug(data.type);
+    const eaKey = cleCetBilled(data.type, data.ea);
+    const legacyKey = `cet_${slug}`;
+    const cle =
+      statuts[eaKey]?.porteeA === data.ea
+        ? eaKey
+        : statuts[legacyKey]?.porteeA === data.ea
+        ? legacyKey
+        : eaKey;
+    const refListe = data.refs.join(', ');
+    const formCET = `CET (${data.ea}) — Type de terre : ${data.type}\nTronçons portés : ${refListe}\nVolume total = ${data.vol.toFixed(3)} m³`;
+    pushWithFrozenAndCorrection(
+      cle,
+      trouverPosteD9000(appData, data.type),
+      'm³',
+      `CET / D9000 — ${data.type} (${data.ea})`,
+      formCET,
+      refListe,
+      d9000Ordre++,
+      data.vol,
+      undefined,
+      { cetType: data.type, isCetOpen: false }
+    );
+  });
+
+  cetOpenMap.forEach((data, type) => {
+    const slug = cetTypeSlug(type);
+    const legacyKey = `cet_${slug}`;
+    const openKey = statuts[legacyKey]?.porteeA ? `${legacyKey}__courant` : legacyKey;
     const refListe = data.refs.join(', ');
     const formCET = `CET — Type de terre : ${type}\nTronçons portés : ${refListe}\nVolume total = ${data.vol.toFixed(3)} m³`;
     pushWithFrozenAndCorrection(
-      `cet_${type.replace(/\s+/g, '_')}`,
+      openKey,
       trouverPosteD9000(appData, type),
       'm³',
       `CET / D9000 — ${type}`,
       formCET,
       refListe,
       d9000Ordre++,
-      data.vol
+      data.vol,
+      undefined,
+      { cetType: type, isCetOpen: true }
     );
   });
 
@@ -1598,13 +1668,20 @@ export function calculerEtatDelai(appData: ProjectData, dateFinOverride?: string
   const rows: DelaiMoisRow[] = [];
 
   if (os && !isNaN(os.getTime())) {
-    const cur = new Date(os.getFullYear(), os.getMonth(), 1);
+    const osYear = os.getFullYear();
+    const osMonth = os.getMonth();
+    const osStartsIncomplete = os.getDate() > 1;
+    let eaSeq = 0;
+
+    const cur = new Date(osYear, osMonth, 1);
     const endM = new Date(maxRowsEnd.getFullYear(), maxRowsEnd.getMonth(), 1);
     while (cur <= endM) {
-      const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`;
+      const y = cur.getFullYear();
+      const m = cur.getMonth();
+      const key = `${y}-${String(m + 1).padStart(2, '0')}`;
       const base = moisMap.get(key) || {
-        y: cur.getFullYear(),
-        m: cur.getMonth(),
+        y,
+        m,
         nbJ: 0,
         nSam: 0,
         nDim: 0,
@@ -1617,7 +1694,24 @@ export function calculerEtatDelai(appData: ProjectData, dateFinOverride?: string
         mesEmp: 0,
         intDetail: [],
       };
-      rows.push({ ...base, intDetail: base.intDetail.join('-') || '—' });
+
+      const monthEnd = new Date(y, m + 1, 0);
+      const isElapsed = monthEnd <= today;
+      let eaLabel = '';
+      if (isElapsed) {
+        if (y === osYear && m === osMonth && osStartsIncomplete) {
+          eaLabel = 'EA 0';
+        } else {
+          eaSeq += 1;
+          eaLabel = `EA ${String(eaSeq).padStart(2, '0')}`;
+        }
+      }
+
+      rows.push({
+        ...base,
+        intDetail: base.intDetail.join('-') || '—',
+        eaLabel,
+      });
       cur.setMonth(cur.getMonth() + 1);
     }
   }

@@ -24,6 +24,7 @@ import {
   construireLignesCarnet,
   evalCalc,
   fmt,
+  getTronconCetEffectiveEA,
   mnt,
   normCV,
   NRM,
@@ -434,9 +435,11 @@ export const Tab3Carnet: React.FC<Tab3CarnetProps> = ({
               t.ref === ref ? { ...t, insp_porter: false, insp_qte: null } : t
             );
           } else if (l.cle.startsWith('cet_')) {
-            const typeName = l.cle.replace(/^cet_/, '').replace(/_/g, ' ');
+            const typeName = l.cetType || l.cle.replace(/^cet_/, '').replace(/_/g, ' ');
             nextTroncons = nextTroncons.map((t) =>
-              t.d9000Type === typeName ? { ...t, cet_porter: false, cet_qte: null } : t
+              t.d9000Type === typeName && !getTronconCetEffectiveEA(t, carnet.statutsLignes)
+                ? { ...t, cet_porter: false, cet_qte: null, cet_porteeA: null }
+                : t
             );
           } else {
             nextOverrides[l.cle] = { ...(nextOverrides[l.cle] || {}), _ignore: true };
@@ -919,14 +922,14 @@ export const Tab3Carnet: React.FC<Tab3CarnetProps> = ({
                           className="bg-slate-50 dark:bg-slate-800/80 border-y border-slate-300 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
                         >
                           <td colSpan={showAnnotations ? 9 : 8} className="py-2 px-3">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100">
+                            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+                              <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100 min-w-0">
                                 {isCollapsed ? (
                                   <ChevronRight className="w-4 h-4 text-slate-500 shrink-0" />
                                 ) : (
                                   <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />
                                 )}
-                                <span className="font-mono text-sky-700 dark:text-sky-400">
+                                <span className="font-mono text-sky-700 dark:text-sky-400 shrink-0">
                                   {grp.posteId ? `Poste ${grp.posteId}` : 'Non lié au bordereau'}
                                 </span>
                                 {grp.poste && (
@@ -934,18 +937,23 @@ export const Tab3Carnet: React.FC<Tab3CarnetProps> = ({
                                     — {grp.poste.desc}
                                   </span>
                                 )}
-                                <span className="text-[11px] font-normal text-slate-500">
+                                <span className="text-[11px] font-normal text-slate-500 whitespace-nowrap">
                                   ({grp.lines.length} ligne{grp.lines.length > 1 ? 's' : ''})
                                 </span>
                               </div>
-                              <div className="flex items-center gap-4 text-[11px] font-mono tabular-nums">
-                                <span className="text-emerald-700 dark:text-emerald-400 font-bold">
+                              <div className="ml-auto flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-[11px] font-mono tabular-nums text-right">
+                                {grp.poste && (
+                                  <span className="text-slate-700 dark:text-slate-200 font-bold whitespace-nowrap">
+                                    Prévue : {fmt(grp.poste.qte, 3)} {unite}
+                                  </span>
+                                )}
+                                <span className="text-emerald-700 dark:text-emerald-400 font-bold whitespace-nowrap">
                                   EA : {fmt(grp.totalEA, 3)} {unite}
                                 </span>
-                                <span className="text-amber-700 dark:text-amber-400 font-bold">
+                                <span className="text-amber-700 dark:text-amber-400 font-bold whitespace-nowrap">
                                   Facturé : {fmt(grp.totalFacture, 3)} {unite}
                                 </span>
-                                <span className="text-sky-700 dark:text-sky-400 font-bold">
+                                <span className="text-sky-700 dark:text-sky-400 font-bold whitespace-nowrap">
                                   Cumulé : {fmt(grp.totalEA + grp.totalFacture, 3)} {unite}
                                 </span>
                               </div>
@@ -1235,9 +1243,13 @@ export const Tab3Carnet: React.FC<Tab3CarnetProps> = ({
                 tronconsEgout: (prev.tronconsEgout || []).map((t) => {
                   const u = map.get(t.ref);
                   if (!u) return t;
-                  return inspCetModal === 'insp'
-                    ? { ...t, insp_porter: u.porter, insp_qte: u.qte }
-                    : { ...t, cet_porter: u.porter, cet_qte: u.qte };
+                  if (inspCetModal === 'insp') {
+                    return { ...t, insp_porter: u.porter, insp_qte: u.qte };
+                  }
+                  if (getTronconCetEffectiveEA(t, prev.carnetMesurage?.statutsLignes)) {
+                    return t;
+                  }
+                  return { ...t, cet_porter: u.porter, cet_qte: u.qte, cet_porteeA: null };
                 }),
               };
             });

@@ -1,7 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, FileSpreadsheet, Lock, PlusCircle } from 'lucide-react';
 import { CarnetLineItem, DetailPosteEA, HistoriqueEA, PosteMarche, ProjectData } from '../types/project';
-import { construireLignesCarnet, fmt, mnt, prochainNumeroEA, srcP } from '../utils/calculations';
+import {
+  cleCetBilled,
+  construireLignesCarnet,
+  fmt,
+  getTronconCetEffectiveEA,
+  mnt,
+  prochainNumeroEA,
+  srcP,
+} from '../utils/calculations';
 import { exportEaEnCoursExcel } from '../utils/excelExports';
 import { PrintHeader } from './PrintHeader';
 
@@ -121,24 +129,65 @@ export const Tab4EaEnCours: React.FC<Tab4EaEnCoursProps> = ({
 
     onUpdateData((prev) => {
       const carnet = prev.carnetMesurage;
-      const nextStatuts = { ...carnet.statutsLignes };
+      const origStatuts = carnet.statutsLignes || {};
+      const nextStatuts = { ...origStatuts };
+      const nextOverrides = { ...(carnet.overrides || {}) };
+      const closedCetTypes = new Set<string>();
 
       checkedLines.forEach((l) => {
-        nextStatuts[l.cle] = {
-          ...(nextStatuts[l.cle] || {}),
-          porteeA: eaIndice,
-          coche: false,
-          qteSnapshot: Math.round(l.qEff * 1000) / 1000,
-          posteIdSnapshot: l.posteId || undefined,
-          deverrouille: false,
-        };
+        if (l.isCetOpen && l.cetType) {
+          const billedKey = cleCetBilled(l.cetType, eaIndice);
+          nextStatuts[billedKey] = {
+            ...(origStatuts[l.cle] || {}),
+            porteeA: eaIndice,
+            coche: false,
+            qteSnapshot: Math.round(l.qEff * 1000) / 1000,
+            posteIdSnapshot: l.posteId || undefined,
+            deverrouille: false,
+          };
+          if (l.cle !== billedKey) {
+            delete nextStatuts[l.cle];
+            if (nextOverrides[l.cle]) {
+              nextOverrides[billedKey] = nextOverrides[l.cle];
+              delete nextOverrides[l.cle];
+            }
+          }
+          closedCetTypes.add(l.cetType);
+        } else {
+          nextStatuts[l.cle] = {
+            ...(nextStatuts[l.cle] || {}),
+            porteeA: eaIndice,
+            coche: false,
+            qteSnapshot: Math.round(l.qEff * 1000) / 1000,
+            posteIdSnapshot: l.posteId || undefined,
+            deverrouille: false,
+          };
+        }
       });
+
+      const nextTroncons =
+        closedCetTypes.size > 0
+          ? (prev.tronconsEgout || []).map((t) => {
+              if (
+                t.fait !== false &&
+                t.cet_porter &&
+                t.d9000Type &&
+                closedCetTypes.has(t.d9000Type) &&
+                !getTronconCetEffectiveEA(t, origStatuts)
+              ) {
+                return { ...t, cet_porteeA: eaIndice };
+              }
+              return t;
+            })
+          : prev.tronconsEgout;
 
       return {
         ...prev,
+        tronconsEgout: nextTroncons,
         carnetMesurage: {
           ...carnet,
           statutsLignes: nextStatuts,
+          overrides: nextOverrides,
         },
         historiqueEA: [...(prev.historiqueEA || []), newEA],
       };
